@@ -10,10 +10,13 @@ import dev.mv.engine.gui.style.value.GuiValueParentPercentage;
 import dev.mv.engine.gui.style.value.GuiValuePercentage;
 import dev.mv.engine.input.Input;
 import dev.mv.engine.input.InputCollector;
+import dev.mv.engine.input.processors.GuiInputProcessor;
 import dev.mv.engine.input.processors.MainInputProcessor;
 import dev.mv.engine.render.shared.Color;
 import dev.mv.engine.render.shared.DrawContext;
 import dev.mv.engine.render.shared.Window;
+import dev.mv.engine.resources.R;
+import dev.mv.fnab.night.Night;
 import dev.mv.fnab.state.GlobalState;
 import dev.mv.fnab.state.MenuState;
 import dev.mv.fnab.state.Save;
@@ -37,11 +40,12 @@ public class Manager implements ApplicationLoop {
     public void start(MVEngine engine, Window window) throws Exception {
         save = engine.getGame().getGameDirectory().getFileAsObject("save.dat", new Save.SaveSaver());
 
+        engine.createResources();
+
         ctx = new DrawContext(window);
+        ctx.font(R.font.get("mvengine.default"));
         input = new InputCollector(window);
         input.start();
-
-        engine.createResources();
 
         gui = new Gui();
 
@@ -53,6 +57,11 @@ public class Manager implements ApplicationLoop {
         newGame.style.text.color = new GuiValueJust<>(new Color(255, 255, 255, 255));
         newGame.style.backgroundColor = new GuiValueJust<>(new Color(0));
 
+        newGame.onclick((e, b, x, y) -> {
+            state = GlobalState.NIGHT;
+            state.value = new Night(1);
+        });
+
         GuiButton cont = new GuiButton();
         cont.setText("Continue");
         cont.moveTo(100, (int) (window.getHeight() * 0.5));
@@ -63,12 +72,18 @@ public class Manager implements ApplicationLoop {
 
         gui.addElement(newGame);
         gui.addElement(cont);
+
+        GuiInputProcessor.addGui(gui);
     }
 
     @Override
     public void update(MVEngine engine, Window window) throws Exception {
         if (Input.keys[Input.KEY_ESCAPE]) {
             window.close();
+        }
+        if (state == GlobalState.NIGHT) {
+            Night night = state.night();
+            night.update();
         }
     }
 
@@ -77,6 +92,10 @@ public class Manager implements ApplicationLoop {
         if (state == GlobalState.MENU) {
             MenuState menu = state.menu();
             gui.draw(ctx);
+        }
+        else if (state == GlobalState.NIGHT) {
+            Night night = state.night();
+            night.drawDebug(ctx);
         }
     }
 
