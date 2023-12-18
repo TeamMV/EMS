@@ -1,5 +1,6 @@
 package dev.mv.fnab;
 
+import dev.mv.engine.files.FileManager;
 import dev.mv.engine.game.Game;
 import dev.mv.engine.game.WindowStyle;
 import dev.mv.engine.utils.misc.Version;
@@ -8,6 +9,12 @@ import org.jetbrains.annotations.NotNull;
 public class FNAB extends Game {
 
     @Override
+    protected void setupGameDir() {
+        this.gameDirectory = FileManager.getDirectory("mqxf");
+        this.config = this.gameDirectory.getConfigFile("fnab");
+    }
+
+   @Override
     public void run() {
         initialize();
         manage().mainWindow(

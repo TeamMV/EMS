@@ -21,6 +21,7 @@ public class MissCarr extends Enemy {
     @Override
     public boolean opportunity() {
         if (location == Location.SCI1) {
+            if (night.player == PlayerState.COMPUTER)
             lastRoll = random.nextInt(2);
             return lastRoll == 0;
         }
@@ -92,7 +93,7 @@ public class MissCarr extends Enemy {
                     night.blockOn = PlayerState.STUDYING;
                     new Thread(() -> {
                         try {
-                            Thread.sleep(1100 - (level * 50L));
+                            Thread.sleep(2500 - (level * 100L));
                             if (night.player == PlayerState.STUDYING) {
                                 Thread.sleep(3500);
                                 location = Location.SCI3;

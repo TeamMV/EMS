@@ -44,8 +44,6 @@ public class Manager implements ApplicationLoop {
 
         ctx = new DrawContext(window);
         ctx.font(R.font.get("mvengine.default"));
-        input = new InputCollector(window);
-        input.start();
 
         gui = new Gui();
 
