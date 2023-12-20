@@ -12,12 +12,15 @@ import dev.mv.utils.misc.Version;
 
 public class Main {
     public static void main(String[] args) {
+        //TODO: features
+        //Context: contains all known variables, their starting values, and inferred types.
+        //Use context to infer type of ident expression
+        //Update type when using "assign" to a variable
+        //Have a private list of variables and their types, update while parsing
+        //Use the list to find variables that aren't created, and to type check
+        //Function calls and if statements at compile time, before any code is executed
         Parser parser = new Parser("""
-                x = 10
-                y = sin(x)
-                plus = 10 + x
-                minus = plus + plus
-                divide = plus - minus / divide + plus
+                x=10y=sin(x)plus=(10+x)minus=plus+plus divide=plus-minus/divide+plus
                 if y < x || x > 20 do
                     x += 0.01
                     y -= x / 100 ** 2

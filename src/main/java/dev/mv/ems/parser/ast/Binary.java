@@ -12,6 +12,7 @@ public class Binary implements Expression {
     }
 
     public Type inferType() {
+        if (op.isComp()) return Type.BOOL;
         Type at = a.inferType();
         Type bt = b.inferType();
         if (at == Type.UNKNOWN) return bt;

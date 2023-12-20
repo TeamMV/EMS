@@ -242,7 +242,6 @@ public class Lexer {
                                 buffer.append(p);
                                 next();
                             } else {
-                                next();
                                 break;
                             }
                         }

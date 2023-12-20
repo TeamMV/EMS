@@ -17,7 +17,7 @@ public class Block implements Statement {
         for (Statement stmt : stmts) {
             builder.append(stmt);
         }
-        builder.append("}\n");
+        builder.append("}");
         return builder.toString();
     }
 

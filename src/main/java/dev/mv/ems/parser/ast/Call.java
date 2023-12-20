@@ -27,7 +27,7 @@ public class Call implements Expression {
         for (Expression expr : args) {
             builder.append(expr.toString() + ", ");
         }
-        builder.append(")\n");
+        builder.append(")");
         return builder.toString();
     }
 

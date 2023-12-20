@@ -36,6 +36,17 @@ public enum Operator {
     public boolean isUnary() {
         return this == NOT || this == MINUS;
     }
+
+    public boolean isComp() {
+        switch (this) {
+            case GT, LT, GTE, LTE, EQUAL, NEQUAL -> {
+                return true;
+            }
+            default -> {
+                return false;
+            }
+        }
+    }
     
     public float apply(float a, float b) {
         return switch (this) {
