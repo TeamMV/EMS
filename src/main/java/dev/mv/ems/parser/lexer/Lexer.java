@@ -209,7 +209,7 @@ public class Lexer {
                         }
                         String str = buffer.toString();
                         switch (str) {
-                            default -> { return Token.IDENT.setValue(str.toLowerCase(Locale.ROOT)); }
+                            default -> { return Token.IDENT.setValue(str); }
                             case "true" -> { return Token.TRUE; }
                             case "false" -> { return Token.FALSE; }
                             case "if" -> { return Token.IF; }
@@ -246,9 +246,9 @@ public class Lexer {
                         }
                         String str = buffer.toString();
                         if (str.contains(".")) {
-                            return Token.FLITERAL.setValue(Float.parseFloat(str));
+                            return Token.FLITERAL.setValue(Double.parseDouble(str));
                         } else {
-                            return Token.ILITERAL.setValue(Integer.parseInt(str));
+                            return Token.ILITERAL.setValue(Long.parseLong(str));
                         }
                     }
                 }

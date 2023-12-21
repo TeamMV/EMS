@@ -6,7 +6,7 @@
 
     <elements>
         <aligner x="0" y="0" width="100vw" height="100vh" alignX="LEFT" alignY="TOP">
-            <verticalLayout spacing="5">
+            <verticalLayout spacing="5" id="mainVert">
                 <horizontalLayout>
                     <button height="$VAR(height)">File</button>
                     <button height="$VAR(height)">Simulation</button>

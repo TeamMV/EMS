@@ -14,5 +14,4 @@ public class Assignment implements Statement {
     public String toString() {
         return name + " = " + value.toString() + "\n";
     }
-
 }

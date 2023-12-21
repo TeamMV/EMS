@@ -40,6 +40,27 @@ public class Call implements Expression {
         return checks;
     }
 
+    public boolean collapsible() {
+        for (Expression e : args) {
+            if (!e.collapsible()) return false;
+        }
+        return true;
+    }
+
+    public Literal collapse() {
+        double[] values = new double[args.size()];
+        for (int i = 0; i < args.size(); i++) {
+            values[i] = args.get(i).collapse().getAsD();
+        }
+        double result = function.evaluate(values);
+        return switch (function.type) {
+            case FLOAT -> new Literal(Type.FLOAT, Double.doubleToLongBits(result));
+            case INT -> new Literal(Type.INT, (long) result);
+            case BOOL -> new Literal(Type.BOOL, (long) result);
+            default -> null;
+        };
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(function.name().toLowerCase() + "(");

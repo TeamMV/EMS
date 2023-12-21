@@ -47,6 +47,57 @@ public class Binary implements Expression {
         return Type.INT;
     }
 
+    public boolean collapsible() {
+        return a.collapsible() && b.collapsible();
+    }
+
+    public Literal collapse() {
+        Literal a = this.a.collapse();
+        Literal b = this.b.collapse();
+        if (op.isComp()) {
+            switch (chooseType(a, b)) {
+                case FLOAT -> {
+                    if (a.type != Type.FLOAT) {
+                        return new Literal(Type.BOOL, op.applyCond((double) a.getL(), b.getD()) ? 1 : 0);
+                    }
+                    else if (b.type != Type.FLOAT) {
+                        return new Literal(Type.BOOL, op.applyCond(a.getD(), (double) b.getL()) ? 1 : 0);
+                    }
+                    return new Literal(Type.BOOL, op.applyCond(a.getD(), b.getD()) ? 1 : 0);
+                }
+                case INT -> {
+                    return new Literal(Type.BOOL, op.applyCond(a.getL(), b.getL()) ? 1 : 0);
+                }
+                case BOOL -> {
+                    return new Literal(Type.BOOL, op.apply(a.getB(), b.getB()) ? 1 : 0);
+                }
+            }
+        }
+        switch (chooseType(a, b)) {
+            case FLOAT -> {
+                if (a.type != Type.FLOAT) {
+                    return new Literal(Type.FLOAT, Double.doubleToLongBits(op.apply((double) a.getL(), b.getD())));
+                }
+                else if (b.type != Type.FLOAT) {
+                    return new Literal(Type.FLOAT, Double.doubleToLongBits(op.apply(a.getD(), (double) b.getL())));
+                }
+                return new Literal(Type.FLOAT, Double.doubleToLongBits(op.apply(a.getD(), b.getD())));
+            }
+            case INT -> {
+                return new Literal(Type.INT, op.apply(a.getL(), b.getL()));
+            }
+            case BOOL -> {
+                return new Literal(Type.BOOL, op.apply(a.getB(), b.getB()) ? 1 : 0);
+            }
+        }
+        return null;
+    }
+
+    private Type chooseType(Literal a, Literal b) {
+        if (a.type == b.type) return a.type;
+        if (a.type == Type.FLOAT || b.type == Type.FLOAT) return Type.FLOAT;
+        return Type.INT;
+    }
 
     @Override
     public String toString() {

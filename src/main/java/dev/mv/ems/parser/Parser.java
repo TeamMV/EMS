@@ -5,13 +5,16 @@ import dev.mv.ems.parser.lexer.Lexer;
 import dev.mv.ems.parser.lexer.Token;
 import dev.mv.ems.runtime.Program;
 import dev.mv.ems.runtime.Variable;
+import dev.mv.utils.generic.triplet.Triplet;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Parser {
+
+    public static final Triplet<String, Type, Long>[] CONSTANTS = new Triplet[] {
+            new Triplet<>("PI", Type.FLOAT, Double.doubleToLongBits(Math.PI)),
+            new Triplet<>("E", Type.FLOAT, Double.doubleToLongBits(Math.E))
+    };
 
     private Lexer lexer;
     public Map<String, Type> startingVariables = new HashMap<>();
@@ -50,6 +53,8 @@ public class Parser {
         Map<String, Variable> vars = new HashMap<>();
 
         for (String name : variables.keySet()) {
+            if (vars.containsKey(name)) continue;
+            if (Arrays.stream(CONSTANTS).anyMatch(constant -> constant.a.equals(name))) continue;
             Type start = startingVariables.get(name);
             Type end = variables.get(name);
 
@@ -65,7 +70,7 @@ public class Parser {
         return new Program(stmts, vars);
     }
 
-    private static Variable createVariable(String name, Type start, Type end) {
+    private Variable createVariable(String name, Type start, Type end) {
         Type fType = start;
 
         if (start != end && end != Type.UNKNOWN) {
@@ -133,6 +138,8 @@ public class Parser {
                 String name = token.getValueAs();
                 Token next = lexer.nextToken();
                 if (next == Token.OPERATOR_ASSIGN) {
+                    if (Arrays.stream(CONSTANTS).anyMatch(constant -> constant.a.equals(name))) throw new RuntimeException(name + " is a constant and cannot be changed!");
+                    if (name.equals("index")) throw new RuntimeException("\"index\" is a reserved variable which cannot be modified");
                     Operator op = next.getValueAs();
                     Expression value = parseExpression();
                     Type type = value.inferType(variables);
@@ -147,6 +154,8 @@ public class Parser {
                     return new Assignment(name, new Binary(new Ident(name), op, value));
                 }
                 else if (next == Token.ASSIGN) {
+                    if (Arrays.stream(CONSTANTS).anyMatch(constant -> constant.a.equals(name))) throw new RuntimeException(name + " is a constant and cannot be changed!");
+                    if (name.equals("index")) throw new RuntimeException("\"index\" is a reserved variable which cannot be modified");
                     Expression value = parseExpression();
                     Type type = value.inferType(variables);
                     if (!startingVariables.containsKey(name)) {
@@ -184,6 +193,7 @@ public class Parser {
 
         while (token == Token.OPERATOR) {
             Operator op = token.getValueAs();
+
             int precedence = op.getPrecedence();
 
             if (precedence < minPrecedence) {
@@ -192,7 +202,6 @@ public class Parser {
             }
 
             Expression right = parsePrimaryExpression();
-
 
             Token inner = lexer.nextToken();
 
@@ -208,11 +217,13 @@ public class Parser {
 
                 Expression extra = parseExpressionWithPrecedence(innerPrecedence);
                 right = new Binary(right, innerOp, extra);
+                if (right.collapsible()) right = right.collapse();
                 inner = lexer.nextToken();
             }
             lexer.revert(inner);
 
             left = new Binary(left, op, right);
+            if (left.collapsible()) left = left.collapse();
             token = lexer.nextToken();
         }
         lexer.revert(token);
@@ -227,7 +238,9 @@ public class Parser {
                 Operator op = token.getValueAs();
                 if (op.isUnary()) {
                     Expression operand = parseExpression();
-                    return new Unary(operand, op);
+                    Expression e = new Unary(operand, op);
+                    if (e.collapsible()) return e.collapse();
+                    return e;
                 }
                 throw new UnexpectedTokenException("Binary operator " + token + " without left expression");
             }
@@ -238,30 +251,69 @@ public class Parser {
                     List<Expression> args = parseArguments();
                     Call call = new Call(name, args);
                     if (!call.checkTypes(variables)) calls.add(call);
+                    if (call.collapsible()) return call.collapse();
                     return call;
                 }
-                else {
-                    lexer.revert(token);
-                    if (!startingVariables.containsKey(name)) {
-                        startingVariables.put(name, Type.UNKNOWN);
-                        variables.put(name, Type.UNKNOWN);
+                else if (token == Token.OPERATOR) {
+                    Operator op = token.getValueAs();
+                    if (op == Operator.NOT) {
+                        if (!startingVariables.containsKey(name)) {
+                            startingVariables.put(name, Type.UNKNOWN);
+                            variables.put(name, Type.UNKNOWN);
+                        }
+                        Expression e = new Unary(new Ident(name), Operator.FACT);
+                        if (e.collapsible()) return e.collapse();
+                        return e;
                     }
-                    return new Ident(name);
                 }
+                lexer.revert(token);
+                if (!startingVariables.containsKey(name)) {
+                    startingVariables.put(name, Type.UNKNOWN);
+                    variables.put(name, Type.UNKNOWN);
+                }
+                Expression e = new Ident(name);
+                if (e.collapsible()) return e.collapse();
+                return e;
             }
             case LPAREN -> {
                 Expression expression = parseExpression();
                 token = lexer.nextToken();
                 if (token != Token.RPAREN) throw new UnexpectedTokenException("Expected ')', got " + token);
+                token = lexer.nextToken();
+                if (token == Token.OPERATOR) {
+                    Operator op = token.getValueAs();
+                    if (op == Operator.NOT) {
+                        Expression e = new Unary(expression, Operator.FACT);
+                        if (e.collapsible()) return e.collapse();
+                        return e;
+                    }
+                }
+                lexer.revert(token);
                 return expression;
             }
             case ILITERAL -> {
-                Integer value = token.getValueAs();
+                Long value = token.getValueAs();
+                token = lexer.nextToken();
+                if (token == Token.OPERATOR) {
+                    Operator op = token.getValueAs();
+                    if (op == Operator.NOT) {
+                        return new Literal(Type.INT, fact(value));
+                    }
+                }
+                lexer.revert(token);
                 return new Literal(Type.INT, value);
             }
             case FLITERAL -> {
-                Float value = token.getValueAs();
-                return new Literal(Type.FLOAT, Float.floatToIntBits(value));
+                Double value = token.getValueAs();
+                token = lexer.nextToken();
+                if (token == Token.OPERATOR) {
+                    Operator op = token.getValueAs();
+                    if (op == Operator.NOT) {
+                        return new Literal(Type.FLOAT, Double.doubleToLongBits(fact(value)));
+                    }
+                }
+                lexer.revert(token);
+                return new Literal(Type.FLOAT, Double.doubleToLongBits(value));
             }
             case TRUE -> {
                 return new Literal(Type.BOOL, 1);
@@ -270,6 +322,51 @@ public class Parser {
                 return new Literal(Type.BOOL, 0);
             }
             default -> throw new UnexpectedTokenException("Expected unary operator, identifier or literal, got " + token);
+        }
+    }
+
+    private long fact(long input) {
+        long result = 1;
+        for (long i = 1; i <= input; i++) {
+            result *= i;
+        }
+        return result;
+    }
+
+    private static final double GAMMA_R = 10.900511;
+
+    private static final double[] GAMMA_DK = new double[]{
+        2.48574089138753565546e-5,
+        1.05142378581721974210,
+        -3.45687097222016235469,
+        4.51227709466894823700,
+        -2.98285225323576655721,
+        1.05639711577126713077,
+        -1.95428773191645869583e-1,
+        1.70970543404441224307e-2,
+        -5.71926117404305781283e-4,
+        4.63399473359905636708e-6,
+        -2.71994908488607703910e-9
+    };
+
+    private static final double TWO_SQRT_E_OVER_PI = 1.8603827342052657173362492472666631120594218414085755;
+
+    private double fact(double x) {
+        x++;
+        double s = GAMMA_DK[0];
+        if (x < 0.5) {
+            for (int i = 1; i < GAMMA_DK.length; i++) {
+                s += GAMMA_DK[i] / ((double) i - x);
+            }
+
+            return Math.PI / Math.sin(Math.PI * x) * s * TWO_SQRT_E_OVER_PI * Math.pow((0.5 - x + GAMMA_R) / Math.E, 0.5 - x);
+        }
+        else {
+            for (int i = 1; i < GAMMA_DK.length; i++) {
+                s += GAMMA_DK[i] / (x + (double) i - 1);
+            }
+
+            return s * TWO_SQRT_E_OVER_PI * Math.pow((x - 0.5 + GAMMA_R) / Math.E, x - 0.5);
         }
     }
 

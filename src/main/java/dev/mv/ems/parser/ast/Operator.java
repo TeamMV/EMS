@@ -19,6 +19,7 @@ public enum Operator {
     BOR(1),
     XOR(1),
     NOT(8),
+    FACT(8),
     LSHIFT(4),
     RSHIFT(4),
     ARSHIFT(4);
@@ -39,7 +40,7 @@ public enum Operator {
 
     public boolean isComp() {
         switch (this) {
-            case GT, LT, GTE, LTE, EQUAL, NEQUAL -> {
+            case GT, LT, GTE, LTE, EQUAL, NEQUAL, AND, OR -> {
                 return true;
             }
             default -> {
@@ -48,25 +49,25 @@ public enum Operator {
         }
     }
     
-    public float apply(float a, float b) {
+    public double apply(double a, double b) {
         return switch (this) {
             case PLUS -> a + b;
             case MINUS -> a - b;
             case MULTIPLY -> a * b;
             case DIVIDE -> a / b;
-            case POWER -> (float) Math.pow(a, b);
+            case POWER -> Math.pow(a, b);
             case MOD -> a % b;
-            case BAND -> (float) ((int) a & (int) b);
-            case BOR -> (float) ((int) a | (int) b);
-            case XOR -> (float) ((int) a ^ (int) b);
-            case LSHIFT -> (float) ((int) a << (int) b);
-            case RSHIFT -> (float) ((int) a >> (int) b);
-            case ARSHIFT -> (float) ((int) a >>> (int) b);
+            case BAND -> (double) ((long) a & (long) b);
+            case BOR -> (double) ((long) a | (long) b);
+            case XOR -> (double) ((long) a ^ (long) b);
+            case LSHIFT -> (double) ((long) a << (long) b);
+            case RSHIFT -> (double) ((long) a >> (long) b);
+            case ARSHIFT -> (double) ((long) a >>> (long) b);
             default -> 0.0f;
         };
     }
     
-    public boolean applyCond(float a, float b) {
+    public boolean applyCond(double a, double b) {
         return switch (this) {
             case EQUAL -> a == b;
             case NEQUAL -> a != b;
@@ -80,13 +81,13 @@ public enum Operator {
         };
     }
 
-    public int apply(int a, int b) {
+    public long apply(long a, long b) {
         return switch (this) {
             case PLUS -> a + b;
             case MINUS -> a - b;
             case MULTIPLY -> a * b;
             case DIVIDE -> a / b;
-            case POWER -> (int) Math.pow(a, b);
+            case POWER -> (long) Math.pow(a, b);
             case MOD -> a % b;
             case BAND -> a & b;
             case BOR -> a | b;
@@ -98,7 +99,7 @@ public enum Operator {
         };
     }
 
-    public boolean applyCond(int a, int b) {
+    public boolean applyCond(long a, long b) {
         return switch (this) {
             case EQUAL -> a == b;
             case NEQUAL -> a != b;
@@ -120,21 +121,24 @@ public enum Operator {
             case XOR, MINUS -> a ^ b;
             case EQUAL -> a == b;
             case NEQUAL -> a != b;
-            case LTE, GTE -> true;
             case AND, MOD, MULTIPLY, DIVIDE -> a && b;
             case OR, PLUS -> a || b;
+            case GT -> a && !b;
+            case LT -> !a && b;
+            case GTE -> (a && !b) || (a == b);
+            case LTE -> (!a && b) || (a == b);
             default -> false;
         };
     }
 
-    public float apply(float val) {
+    public double apply(double val) {
         return switch (this) {
             case NOT, MINUS -> -val;
             default -> val;
         };
     }
 
-    public int apply(int val) {
+    public long apply(long val) {
         return switch (this) {
             case NOT, MINUS -> -val;
             default -> val;
