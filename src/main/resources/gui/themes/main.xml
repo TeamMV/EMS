@@ -22,7 +22,7 @@
     <general>
         <edges>
             <style>SQUARE</style>
-            <radius>15</radius>
+            <radius>10</radius>
         </edges>
         <outline>
             <thickness>2</thickness>
@@ -44,40 +44,24 @@
         </times>
         <animation>
             <in>
-                <substract value="20">
-                    <color name="base" value="alpha"/>
-                    <color name="outline" value="alpha"/>
-                </substract>
-                <substract value="4">
-                    <property name="width"/>
-                </substract>
-                <substract value="2">
-                    <property name="height"/>
-                </substract>
-                <add value="2">
-                    <property name="x"/>
-                </add>
                 <add value="1">
+                    <property name="x"/>
                     <property name="y"/>
                 </add>
+                <substract value="2">
+                    <property name="width"/>
+                    <property name="height"/>
+                </substract>
             </in>
             <out>
-                <add value="20">
-                    <color name="base" value="alpha"/>
-                    <color name="outline" value="alpha"/>
-                </add>
-                <add value="4">
-                    <property name="width"/>
-                </add>
-                <add value="2">
-                    <property name="height"/>
-                </add>
-                <substract value="2">
-                    <property name="x"/>
-                </substract>
                 <substract value="1">
+                    <property name="x"/>
                     <property name="y"/>
                 </substract>
+                <add value="2">
+                    <property name="width"/>
+                    <property name="height"/>
+                </add>
             </out>
         </animation>
     </animations>

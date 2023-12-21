@@ -53,40 +53,12 @@ public class Loop implements ApplicationLoop {
         theme.setFont(font);
         registry.applyTheme(theme);
 
-        Parser parser = new Parser("""
-                x += 6
-                y = sin(rad(x)) * 10 - 200
-                
-                """);
-
-        Program p = parser.parse();
-
-        for (Statement stmt : p.stmts) {
-            System.out.print(stmt);
-        }
-
-        Runtime runtime = new Runtime(p);
-        Map<String, double[]> result = runtime.run(100, false);
-
-        double[] ys = result.get("x");
-        double[] ts = result.get("y");
-
-        double[] xs = result.get("index");
-
-        System.out.println(Arrays.toString(xs));
-        System.out.println(Arrays.toString(ys));
-        System.out.println(Arrays.toString(ts));
-
         gp = new GraphPlot(window, VariablePosition.getPosition("100px", "100px", "100%", "400px"), null);
-        gp.setDatasets(new ArrayList<>() {{
-            add(ys);
-            add(ts);
-        }});
 
         VerticalLayout layout = registry.findGui("main").getRoot().findElementById("mainVert");
         layout.addElement(gp);
 
-        editor.setup(mvEngine, window);
+        editor.setup(mvEngine, window, gp);
     }
 
     @Override
@@ -96,10 +68,10 @@ public class Loop implements ApplicationLoop {
 
     @Override
     public void draw(MVEngine mvEngine, Window window) throws Exception {
-        ctx2D.color(Color.WHITE);
+        ctx2D.color(255, 255, 255, 255);
         ctx2D.rectangle(0, 0, window.getWidth(), window.getHeight());
 
-        gp.setWidth((int) (window.getWidth() * 0.8));
+        gp.setWidth(window.getWidth());
 
         R.guis.get("default").renderGuis();
     }

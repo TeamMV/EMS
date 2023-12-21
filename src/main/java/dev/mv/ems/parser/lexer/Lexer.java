@@ -153,6 +153,13 @@ public class Lexer {
                     }
                     return Token.OPERATOR.setValue(Operator.POWER);
                 }
+                case '%' -> {
+                    if (peek() == '=') {
+                        next();
+                        return Token.OPERATOR_ASSIGN.setValue(Operator.MOD);
+                    }
+                    return Token.OPERATOR.setValue(Operator.MOD);
+                }
                 case '<' -> {
                     if (peek() == '=') {
                         next();
@@ -224,6 +231,7 @@ public class Lexer {
                             case "to" -> { return Token.TO; }
                             case "break" -> { return Token.BREAK; }
                             case "continue" -> { return Token.CONTINUE; }
+                            case "mod" -> { return Token.OPERATOR.setValue(Operator.MOD); }
                             case "do" -> { return Token.DO; }
                             case "end" -> { return Token.END; }
                             case "and" -> { return Token.OPERATOR.setValue(Operator.AND); }

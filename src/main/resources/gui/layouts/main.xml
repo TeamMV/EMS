@@ -15,8 +15,14 @@
                     <button height="$VAR(height)" id="input">Input</button>
                     <separator width="20"/>
                     <textLine height="$VAR(height)">repeat</textLine>
-                    <input type="number" width="200" height="$VAR(height)" id="repeat">100</input>
+                    <input type="number" width="50" height="$VAR(height)" id="repeat">100</input>
                     <textLine height="$VAR(height)">times</textLine>
+                    <separator width="20"/>
+                    <textLine height="$VAR(height)">xAxis:</textLine>
+                    <input type="string" width="50" height="$VAR(height)" id="xAxis"/>
+                    <separator width="20"/>
+                    <textLine height="$VAR(height)">yAxis:</textLine>
+                    <input type="string" width="100" height="$VAR(height)" id="yAxis"/>
                     <separator width="20"/>
                     <button height="$VAR(height)" id="run">Run</button>
                 </horizontalLayout>
