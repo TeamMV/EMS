@@ -1,5 +1,7 @@
 package dev.mv.ems.parser.ast;
 
+import java.util.Map;
+
 public class Unary implements Expression {
     public Expression expr;
     public Operator op;
@@ -9,8 +11,8 @@ public class Unary implements Expression {
         this.op = op;
     }
 
-    public Type inferType() {
-        return expr.inferType();
+    public Type inferType(Map<String, Type> vars) {
+        return expr.inferType(vars);
     }
 
     @Override

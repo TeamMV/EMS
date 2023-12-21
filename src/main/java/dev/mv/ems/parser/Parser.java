@@ -3,19 +3,27 @@ package dev.mv.ems.parser;
 import dev.mv.ems.parser.ast.*;
 import dev.mv.ems.parser.lexer.Lexer;
 import dev.mv.ems.parser.lexer.Token;
+import dev.mv.ems.runtime.Program;
+import dev.mv.ems.runtime.Variable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Parser {
 
     private Lexer lexer;
+    public Map<String, Type> startingVariables = new HashMap<>();
+    public Map<String, Type> variables = new HashMap<>();
+    private Map<String, Expression> needResolving = new HashMap<>();
+    private List<Call> calls = new ArrayList<>();
 
     public Parser(String input) {
         lexer = new Lexer(input);
     }
     
-    public List<Statement> parse() {
+    public Program parse() {
         List<Statement> stmts = new ArrayList<>();
 
         Token token = lexer.nextToken();
@@ -25,7 +33,52 @@ public class Parser {
             token = lexer.nextToken();
         }
 
-        return stmts;
+        for (String name : needResolving.keySet()) {
+            Expression expr = needResolving.get(name);
+
+            Type type = expr.inferType(variables);
+            if (type == Type.UNKNOWN) {
+                type = Type.INT;
+            }
+
+            startingVariables.put(name, type);
+            if (variables.get(name) == Type.UNKNOWN) {
+                variables.put(name, type);
+            }
+        }
+
+        Map<String, Variable> vars = new HashMap<>();
+
+        for (String name : variables.keySet()) {
+            Type start = startingVariables.get(name);
+            Type end = variables.get(name);
+
+            Variable var = createVariable(name, start, end);
+            variables.put(name, var.type);
+            vars.put(name, var);
+        }
+
+        for (Call call : calls) {
+            call.checkTypes(variables);
+        }
+
+        return new Program(stmts, vars);
+    }
+
+    private static Variable createVariable(String name, Type start, Type end) {
+        Type fType = start;
+
+        if (start != end && end != Type.UNKNOWN) {
+            if (start == Type.UNKNOWN) fType = end;
+            else if (end == Type.FLOAT && start == Type.INT) fType = end;
+            else if (end == Type.BOOL ^ start == Type.BOOL) throw new RuntimeException("Type error: bool cannot be directly cast to int or float!");
+        }
+        else if (start == Type.UNKNOWN) {
+            fType = Type.INT;
+        }
+
+        Variable var = new Variable(name, fType);
+        return var;
     }
 
     private Statement parseStatement() {
@@ -82,10 +135,28 @@ public class Parser {
                 if (next == Token.OPERATOR_ASSIGN) {
                     Operator op = next.getValueAs();
                     Expression value = parseExpression();
+                    Type type = value.inferType(variables);
+                    if (!startingVariables.containsKey(name) || startingVariables.get(name) == Type.UNKNOWN) {
+                        startingVariables.put(name, type);
+                        if (type == Type.UNKNOWN) needResolving.put(name, value);
+                        variables.put(name, type);
+                    }
+                    else if (type != Type.UNKNOWN) {
+                        variables.put(name, type);
+                    }
                     return new Assignment(name, new Binary(new Ident(name), op, value));
                 }
                 else if (next == Token.ASSIGN) {
                     Expression value = parseExpression();
+                    Type type = value.inferType(variables);
+                    if (!startingVariables.containsKey(name)) {
+                        startingVariables.put(name, type);
+                        if (type == Type.UNKNOWN) needResolving.put(name, value);
+                        variables.put(name, type);
+                    }
+                    else if (type != Type.UNKNOWN) {
+                        variables.put(name, type);
+                    }
                     return new Assignment(name, value);
                 }
                 else {
@@ -165,10 +236,16 @@ public class Parser {
                 token = lexer.nextToken();
                 if (token == Token.LPAREN) {
                     List<Expression> args = parseArguments();
-                    return new Call(name, args);
+                    Call call = new Call(name, args);
+                    if (!call.checkTypes(variables)) calls.add(call);
+                    return call;
                 }
                 else {
                     lexer.revert(token);
+                    if (!startingVariables.containsKey(name)) {
+                        startingVariables.put(name, Type.UNKNOWN);
+                        variables.put(name, Type.UNKNOWN);
+                    }
                     return new Ident(name);
                 }
             }

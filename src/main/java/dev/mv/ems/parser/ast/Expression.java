@@ -1,10 +1,11 @@
 package dev.mv.ems.parser.ast;
 
+import java.util.Map;
+
 public interface Expression {
 
-    Type inferType();
+    Type inferType(Map<String, Type> vars);
 
-    //Type calcType(variables);
     //bool bvalue();
     //int ivalue();
     //float fvalue();

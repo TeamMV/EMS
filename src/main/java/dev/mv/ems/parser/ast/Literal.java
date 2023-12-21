@@ -1,5 +1,7 @@
 package dev.mv.ems.parser.ast;
 
+import java.util.Map;
+
 public class Literal implements Expression {
     Type type;
     int value;
@@ -9,7 +11,7 @@ public class Literal implements Expression {
         this.value = value;
     }
 
-    public Type inferType() {
+    public Type inferType(Map<String, Type> vars) {
         return type;
     }
 

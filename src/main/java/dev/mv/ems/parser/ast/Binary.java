@@ -1,5 +1,7 @@
 package dev.mv.ems.parser.ast;
 
+import java.util.Map;
+
 public class Binary implements Expression {
     public Expression a;
     public Operator op;
@@ -11,20 +13,43 @@ public class Binary implements Expression {
         this.b = b;
     }
 
-    public Type inferType() {
+    public Type inferType(Map<String, Type> vars) {
         if (op.isComp()) return Type.BOOL;
-        Type at = a.inferType();
-        Type bt = b.inferType();
-        if (at == Type.UNKNOWN) return bt;
-        if (bt == Type.UNKNOWN) return at;
+        Type at = a.inferType(vars);
+        Type bt = b.inferType(vars);
+        if (op == Operator.DIVIDE) {
+            if (at == bt) {
+                if (at == Type.INT || at == Type.FLOAT) return Type.FLOAT;
+                return at;
+            }
+            if (at == Type.UNKNOWN) {
+                if (a instanceof Ident i) vars.put(i.name, bt);
+                if (bt == Type.INT) return Type.FLOAT;
+                return bt;
+            }
+            if (bt == Type.UNKNOWN) {
+                if (b instanceof Ident i) vars.put(i.name, at);
+                if (at == Type.INT) return Type.FLOAT;
+                return at;
+            }
+            return Type.FLOAT;
+        }
         if (at == bt) return at;
+        if (at == Type.UNKNOWN) {
+            if (a instanceof Ident i) vars.put(i.name, bt);
+            return bt;
+        }
+        if (bt == Type.UNKNOWN) {
+            if (b instanceof Ident i) vars.put(i.name, at);
+            return at;
+        }
         if (at == Type.FLOAT || bt == Type.FLOAT) return Type.FLOAT;
         return Type.INT;
     }
+
 
     @Override
     public String toString() {
         return "(" + a.toString() + " " + op.name().toLowerCase() + " " + b.toString() + ")";
     }
-
 }

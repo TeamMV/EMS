@@ -1,7 +1,6 @@
 package dev.mv.ems.parser.lexer;
 
 import dev.mv.ems.parser.ast.Operator;
-import dev.mv.engine.exceptions.Exceptions;
 
 import java.util.*;
 

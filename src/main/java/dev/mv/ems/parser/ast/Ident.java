@@ -1,5 +1,7 @@
 package dev.mv.ems.parser.ast;
 
+import java.util.Map;
+
 public class Ident implements Expression {
     public String name;
 
@@ -7,7 +9,9 @@ public class Ident implements Expression {
         this.name = name;
     }
 
-    public Type inferType() {
+    public Type inferType(Map<String, Type> vars) {
+        Type t = vars.get(name);
+        if (t != null) return t;
         return Type.UNKNOWN;
     }
 

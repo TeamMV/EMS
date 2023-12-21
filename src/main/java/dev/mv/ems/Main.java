@@ -4,10 +4,11 @@ import dev.mv.ems.parser.Parser;
 import dev.mv.ems.parser.ast.Statement;
 import dev.mv.ems.parser.lexer.Lexer;
 import dev.mv.ems.parser.lexer.Token;
-import dev.mv.engine.ApplicationConfig;
-import dev.mv.engine.MVEngine;
-import dev.mv.engine.render.WindowCreateInfo;
-import dev.mv.engine.render.shared.Window;
+//import dev.mv.engine.ApplicationConfig;
+//import dev.mv.engine.MVEngine;
+//import dev.mv.engine.render.WindowCreateInfo;
+//import dev.mv.engine.render.shared.Window;
+import dev.mv.ems.runtime.Program;
 import dev.mv.utils.misc.Version;
 
 public class Main {
@@ -20,7 +21,11 @@ public class Main {
         //Use the list to find variables that aren't created, and to type check
         //Function calls and if statements at compile time, before any code is executed
         Parser parser = new Parser("""
-                x=10y=sin(x)plus=(10+x)minus=plus+plus divide=plus-minus/divide+plus
+                x = x + y
+                y = sin(x)
+                plus = 10 + x
+                minus = plus + plus
+                divide = plus - minus / divide + plus
                 if y < x || x > 20 do
                     x += 0.01
                     y -= x / 100 ** 2
@@ -28,30 +33,37 @@ public class Main {
                         x >>>= 2
                     end
                 }
-                x += 0.01
+                b = 10 * 20
+                a = 10 / 20
                 """);
 
-        for (Statement stmt : parser.parse()) {
+        Program p = parser.parse();
+
+        for (String name : p.vars.keySet()) {
+            System.out.println(p.vars.get(name));
+        }
+
+        for (Statement stmt : p.stmts) {
             System.out.print(stmt);
         }
 
         System.exit(0);
 
-        try (MVEngine engine = MVEngine.init(new ApplicationConfig()
-                .setDimension(ApplicationConfig.GameDimension.ONLY_2D)
-                .setName("EMS")
-                .setVersion(Version.parse("1.0.0"))
-        )) {
-            WindowCreateInfo info = new WindowCreateInfo();
-            info.title = "Easy Model Simulation";
-            info.decorated = true;
-            info.vsync = true;
-            info.width = 800;
-            info.height = 600;
-            info.resizeable = true;
+        //try (MVEngine engine = MVEngine.init(new ApplicationConfig()
+        //        .setDimension(ApplicationConfig.GameDimension.ONLY_2D)
+        //        .setName("EMS")
+        //        .setVersion(Version.parse("1.0.0"))
+        //)) {
+        //    WindowCreateInfo info = new WindowCreateInfo();
+        //    info.title = "Easy Model Simulation";
+        //    info.decorated = true;
+        //    info.vsync = true;
+        //    info.width = 800;
+        //    info.height = 600;
+        //    info.resizeable = true;
 
-            Window window = engine.createWindow(info);
-            window.run(new Loop());
-        }
+        //    Window window = engine.createWindow(info);
+        //    window.run(new Loop());
+        //}
     }
 }
