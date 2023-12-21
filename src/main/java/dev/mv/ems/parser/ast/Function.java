@@ -31,6 +31,12 @@ public enum Function {
     FLOOR(1, Type.INT, Type.FLOAT),
     CEIL(1, Type.INT, Type.FLOAT),
     ROUND(1, Type.INT, Type.FLOAT),
+    LCM(-1, Type.INT, Type.INT),
+    GCD(-1, Type.INT, Type.INT),
+    SIGN(1, Type.INT, Type.FLOAT),
+    ROOT(2, Type.FLOAT, Type.FLOAT, Type.FLOAT),
+    NPR(2, Type.INT, Type.INT, Type.INT),
+    NCR(2, Type.INT, Type.INT, Type.INT),
     LN(1, Type.FLOAT, Type.FLOAT),
     LOG10(1, Type.FLOAT, Type.FLOAT),
     LOG(2, Type.FLOAT, Type.FLOAT, Type.FLOAT),
@@ -93,12 +99,62 @@ public enum Function {
             case FLOOR -> (float) (int) Math.floor(values[0]);
             case CEIL -> (float) (int) Math.ceil(values[0]);
             case ROUND -> Math.round(values[0]);
+            case LCM -> {
+                if (values.length == 0) yield 0.0f;
+                if (values.length == 1) yield (int) values[0];
+                int result = 1;
+                for (float value : values) {
+                    result = lcm(result, (int) value);
+                }
+                yield 0.0F;
+            }
+            case GCD -> {
+                if (values.length == 0) yield 0.0f;
+                if (values.length == 1) yield (int) values[0];
+                int result = gcd((int) values[0], (int) values[1]);
+                for (int i = 2; i < values.length; i++) {
+                    result = gcd(result, (int) values[i]);
+                }
+                yield result;
+            }
+            case SIGN -> values[0] >= 0 ? 1 : -1;
+            case ROOT -> (float) Math.pow(values[1], 1.0 / values[0]);
+            case NPR -> {
+                int n = (int) values[0];
+                int r = (int) values[0];
+                if (r > n) yield 0.0f;
+                int result = 1;
+                for (int i = n - r + 1; i <= n; i++) result *= i;
+                yield result;
+            }
+            case NCR -> {
+                int n = (int) values[0];
+                int r = (int) values[1];
+                r = Math.min(r, n - r);
+                if (r == 0) yield 1.0f;
+                int result = 1;
+                for (int i = 1; i <= r; i++) result *= (int) ((double) (n - r + i) / i);
+                yield result;
+            }
             case LN -> (float) Math.log(values[0]);
             case LOG10 -> (float) Math.log10(values[0]);
             case LOG -> (float) Math.log(values[1]) / (float) Math.log(values[0]);
             case RAND -> (float) Math.random();
             case RANDINT -> (float) (int) (Math.random() * (values[1] - values[0]) + values[0]);
         };
+    }
+
+    private int gcd(int a, int b) {
+        while (b != 0) {
+            int t = b;
+            b = a % b;
+            a = t;
+        }
+        return a;
+    }
+
+    private int lcm(int a, int b) {
+        return (a * b) / gcd(a, b);
     }
 
     public static Function parse(String name) {
@@ -124,6 +180,8 @@ public enum Function {
                 case "degtorad", "deg_to_rad", "degreestoradians", "degrees_to_radians", "radians" -> RAD;
                 case "radtodeg", "rad_to_deg", "radianstodegrees", "radians_to_degrees", "degrees" -> DEG;
                 case "absolute" -> ABS;
+                case "lowestcommonmultiple", "lowest_common_multiple" -> LCM;
+                case "greatestcommondenominator", "greatest_common_denominator" -> GCD;
                 case "naturallog", "natural_log" -> LN;
                 case "random" -> RAND;
                 case "randomint", "random_int" -> RANDINT;
